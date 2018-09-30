@@ -41,6 +41,9 @@
 const int cOmxDevice::s_playbackSpeeds[eNumDirections][eNumPlaybackSpeeds] = {
 	{ S(0.0f), S( 0.125f), S( 0.25f), S( 0.5f), S( 1.0f), S( 2.0f), S( 4.0f), S( 12.0f) },
 	{ S(0.0f), S(-0.125f), S(-0.25f), S(-0.5f), S(-1.0f), S(-2.0f), S(-4.0f), S(-12.0f) }
+/*	Enigma2 (to be better checked)
+{ S(0.0f), S( 0.125f), S( 0.25f), S( 0.5f), S( 1.0f), S( 2.0f), S( 4.0f), S( 8.0f), S( 16.0f), S( 32.0f), S( 64.0f), S( 128.0f) },
+{ S(0.0f), S(-0.125f), S(-0.25f), S(-0.5f), S(-1.0f), S(-2.0f), S(-4.0f), S(-8.0f), S(-16.0f), S(-32.0f), S(-64.0f), S(-128.0f) }*/
 };
 
 // speed correction factors for live mode
@@ -184,7 +187,7 @@ bool cOmxDevice::SetPlayMode(ePlayMode PlayMode)
 		m_hasAudio = false;
 		m_hasVideo = false;
 		m_videoCodec = cVideoCodec::eInvalid;
-		m_playMode = pmNone;
+		m_playMode = pmNone;	//PTS on Enigma2 ???
 		break;
 
 	case pmAudioVideo:

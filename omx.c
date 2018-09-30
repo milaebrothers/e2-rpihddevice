@@ -94,8 +94,8 @@ public:
 	};
 
 	cOmxEvents() :
-		m_signal(new cCondWait()),
-		m_mutex(new cMutex())
+		m_signal(new cCondWait()),	//call to vdr (tread.h)
+		m_mutex(new cMutex())		//call to vdr (tread.h)
 	{ }
 
 	virtual ~cOmxEvents()
@@ -135,8 +135,8 @@ private:
 	cOmxEvents(const cOmxEvents&);
 	cOmxEvents& operator= (const cOmxEvents&);
 
-	cCondWait*	m_signal;
-	cMutex*		m_mutex;
+	cCondWait*	m_signal;	//call to vdr (tread.h)
+	cMutex*		m_mutex;	//call to vdr (tread.h)
 	std::queue<Event*> m_events;
 };
 
@@ -235,7 +235,7 @@ void cOmx::Action(void)
 
 			delete event;
 		}
-		cCondWait::SleepMs(10);
+		cCondWait::SleepMs(10);		//call to vdr (tread.h)
 
 		if (timer.TimedOut())
 		{
@@ -454,7 +454,7 @@ void cOmx::OnError(void *instance, COMPONENT_T *comp, OMX_U32 data)
 }
 
 cOmx::cOmx() :
-	cThread(),
+	cThread(),							//call to vdr (tread.h)
 	m_client(NULL),
 	m_setAudioStartTime(false),
 	m_setVideoStartTime(false),

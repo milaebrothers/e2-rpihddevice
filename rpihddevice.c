@@ -37,6 +37,7 @@ private:
 
 	static void OnPrimaryDevice(void)
 	{
+/*	Check if enabled OSD on vdr->setup TO BE REMOVED on Enigma2	*/
 		if (cRpiSetup::HasOsd())
 			new cRpiOsdProvider(cRpiSetup::OsdLayer());
 	}
@@ -96,6 +97,11 @@ void cPluginRpiHdDevice::Stop(void)
 {
 }
 
+/*	Call to Setup Menu Page TO BE REMOVED on Enigma2
+	ToDO List:
+	-	Remove setup page
+	-	Passed fixed setup value
+	-	Remove fixed value and read from Enigma2	*/
 cMenuSetupPage* cPluginRpiHdDevice::SetupMenu(void)
 {
 	return cRpiSetup::GetInstance()->GetSetupPage();
@@ -105,15 +111,15 @@ bool cPluginRpiHdDevice::SetupParse(const char *Name, const char *Value)
 {
 	return cRpiSetup::GetInstance()->Parse(Name, Value);
 }
-
+/*	Process Argument passed on start TO BE REMOVED or TUNED on Enigma2	*/
 bool cPluginRpiHdDevice::ProcessArgs(int argc, char *argv[])
 {
 	return cRpiSetup::GetInstance()->ProcessArgs(argc, argv);
 }
-
+/*	Show command line help TO BE REMOVED on Enigma2	*/
 const char *cPluginRpiHdDevice::CommandLineHelp(void)
 {
 	return cRpiSetup::GetInstance()->CommandLineHelp();
 }
 
-VDRPLUGINCREATOR(cPluginRpiHdDevice); // Don't touch this! okay.
+VDRPLUGINCREATOR(cPluginRpiHdDevice); // TO BE REMOVED on Enigma2
