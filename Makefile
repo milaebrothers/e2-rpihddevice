@@ -118,7 +118,7 @@ INCLUDES += $(shell pkg-config --cflags freetype2)
 ### The object files (add further files here):
 
 ILCLIENT = $(ILCDIR)/libilclient.a
-OBJS = $(PLUGIN).o tools.o setup.o omx.o audio.o omxdevice.o ovgosd.o display.o
+OBJS = $(PLUGIN).o tools.o setup.o omx.o audio.o omxdevice.o display.o
 
 ### The main target:
 

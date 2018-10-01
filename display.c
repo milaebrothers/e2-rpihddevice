@@ -18,7 +18,6 @@
  */
 
 #include "display.h"
-#include "ovgosd.h"
 #include "tools.h"
 #include "setup.h"
 
@@ -531,8 +530,6 @@ int cRpiHDMIDisplay::SetMode(int group, int mode)
 void cRpiHDMIDisplay::TvServiceCallback(void *data, unsigned int reason,
 		unsigned int param1, unsigned int param2)
 {
-	if (reason & VC_HDMI_DVI + VC_HDMI_HDMI)
-		cRpiOsdProvider::ResetOsd();
 }
 
 /* ------------------------------------------------------------------------- */

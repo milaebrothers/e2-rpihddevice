@@ -20,7 +20,6 @@
 #include <vdr/plugin.h>
 #include <vdr/config.h>
 
-#include "ovgosd.h"
 #include "omxdevice.h"
 #include "setup.h"
 #include "display.h"
@@ -37,9 +36,6 @@ private:
 
 	static void OnPrimaryDevice(void)
 	{
-/*	Check if enabled OSD on vdr->setup TO BE REMOVED on Enigma2	*/
-		if (cRpiSetup::HasOsd())
-			new cRpiOsdProvider(cRpiSetup::OsdLayer());
 	}
 
 public:

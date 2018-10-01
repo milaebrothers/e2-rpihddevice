@@ -19,7 +19,6 @@
 
 #include "setup.h"
 #include "display.h"
-#include "ovgosd.h"
 
 #include <vdr/tools.h>
 #include <vdr/menuitems.h>
@@ -39,12 +38,10 @@ public:
 
 	cRpiSetupPage(
 			cRpiSetup::AudioParameters audio,
-			cRpiSetup::VideoParameters video,
-			cRpiSetup::OsdParameters osd) :		//OSD TO BE REMOVED on Enigma2
+			cRpiSetup::VideoParameters video) :
 
 		m_audio(audio),
-		m_video(video),
-		m_osd(osd)								//OSD TO BE REMOVED on Enigma2
+		m_video(video)
 	{
 		m_audioPort[0] = tr("analog");
 		m_audioPort[1] = tr("HDMI");
@@ -86,7 +83,7 @@ public:
 	eOSState ProcessKey(eKeys Key)
 	{
 		int newAudioPort = m_audio.port;
-		eOSState state = cMenuSetupPage::ProcessKey(Key);	//OSD TO BE REMOVED on Enigma2
+		eOSState state = cMenuSetupPage::ProcessKey(Key);
 
 		if (Key != kNone)
 		{
@@ -109,9 +106,7 @@ protected:
 		SetupStore("FrameRate", m_video.frameRate);
 		SetupStore("AdvancedDeinterlacer", m_video.advancedDeinterlacer);
 
-		SetupStore("AcceleratedOsd", m_osd.accelerated);		//OSD TO BE REMOVED on Enigma2
-
-		cRpiSetup::GetInstance()->Set(m_audio, m_video, m_osd);	// -> cRpiSetup::GetInstance()->Set(m_audio, m_video)
+		cRpiSetup::GetInstance()->Set(m_audio, m_video);
 }
 
 private:
@@ -147,16 +142,12 @@ private:
 					&m_audio.format, 3, m_audioFormat));
 		}
 
-		Add(new cMenuEditBoolItem(
-				tr("Use GPU accelerated OSD"), &m_osd.accelerated));		//OSD TO BE REMOVED on Enigma2
-
 		SetCurrent(Get(current));
 		Display();
 	}
 
 	cRpiSetup::AudioParameters m_audio;
 	cRpiSetup::VideoParameters m_video;
-	cRpiSetup::OsdParameters   m_osd;										//OSD TO BE REMOVED on Enigma2
 
 	const char *m_audioPort[2];
 	const char *m_audioFormat[3];
@@ -311,7 +302,7 @@ void cRpiSetup::SetHDMIChannelMapping(bool passthrough, int channels)
 
 cMenuSetupPage* cRpiSetup::GetSetupPage(void)
 {
-	return new cRpiSetupPage(m_audio, m_video, m_osd);		// -> return new cRpiSetupPage(m_audio, m_video)
+	return new cRpiSetupPage(m_audio, m_video);
 }
 
 bool cRpiSetup::Parse(const char *name, const char *value)
@@ -328,15 +319,12 @@ bool cRpiSetup::Parse(const char *name, const char *value)
 		m_video.frameRate = atoi(value);
 	else if (!strcasecmp(name, "AdvancedDeinterlacer"))
 		m_video.advancedDeinterlacer = atoi(value);
-	else if (!strcasecmp(name, "AcceleratedOsd"))			//OSD TO BE REMOVED on Enigma2
-		m_osd.accelerated = atoi(value);
 	else return false;
 
 	return true;
 }
 
-void cRpiSetup::Set(AudioParameters audio, VideoParameters video,
-		OsdParameters osd)
+void cRpiSetup::Set(AudioParameters audio, VideoParameters video)
 {
 	if (audio != m_audio)
 	{
@@ -352,35 +340,21 @@ void cRpiSetup::Set(AudioParameters audio, VideoParameters video,
 			m_onVideoSetupChanged(m_onVideoSetupChangedData);
 	}
 
-	if (osd != m_osd)											//OSD TO BE REMOVED on Enigma2
-	{
-		m_osd = osd;
-		cRpiOsdProvider::ResetOsd(false);
-	}
 }
 
 bool cRpiSetup::ProcessArgs(int argc, char *argv[])
 {
 	const int cDisplayOpt = 0x100;
-	static struct option long_options[] = {
-//			{ "disable-osd", no_argument,       NULL, 'd'         },		
+	static struct option long_options[] = {		
 			{ "display",     required_argument, NULL, cDisplayOpt },
 			{ "video-layer", required_argument, NULL, 'v'         },
-//			{ "osd-layer",   required_argument, NULL, 'o'         },
 			{ 0, 0, 0, 0 }
 	};
 	int c;
-	m_plugin.hasOsd = false;										// Set hasOsd to false before to remove OSD code
 	while ((c = getopt_long(argc, argv, "do:v:", long_options, NULL)) != -1)
 	{
 		switch (c)
 		{
-/*		case 'd':
-			m_plugin.hasOsd = false;
-			break;
-		case 'o':
-			m_plugin.osdLayer = atoi(optarg);
-			break;	*/
 		case 'v':
 			m_plugin.videoLayer = atoi(optarg);
 			break;
@@ -405,9 +379,8 @@ bool cRpiSetup::ProcessArgs(int argc, char *argv[])
 			return false;
 		}
 	}
-	DBG("dispmanx layers: video=%d, osd=%d (%s), display=%d",
-			m_plugin.videoLayer, m_plugin.osdLayer,
-			m_plugin.hasOsd ? "enabled" : "disabled", m_plugin.display);
+	DBG("dispmanx layers: video=%d, display=%d",
+			m_plugin.videoLayer, m_plugin.display);
 
 	return true;
 }
@@ -415,9 +388,7 @@ bool cRpiSetup::ProcessArgs(int argc, char *argv[])
 const char *cRpiSetup::CommandLineHelp(void)
 {
 	return	
-//			"  -d,       --disable-osd  disable OSD\n"
 			"  -v,       --video-layer  dispmanx layer for video (default 0)\n"
-//			"  -o,       --osd-layer    dispmanx layer for OSD (default 2)\n"
 			"            --display      display used for output:\n"
 			"                           0: default display (default)\n"
 			"                           4: LCD\n"
