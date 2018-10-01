@@ -1,5 +1,5 @@
 /*
- * rpihddevice - VDR HD output device for Raspberry Pi
+ * rpihddevice - Enigma2 output device for Raspberry Pi
  * Copyright (C) 2014, 2015, 2016 Thomas Reufer
  *
  * This program is free software; you can redistribute it and/or modify
@@ -15,11 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- */
 
 #include <vdr/plugin.h>
 #include <vdr/config.h>
-
+*/
 #include "omxdevice.h"
 #include "setup.h"
 #include "display.h"
@@ -28,7 +27,7 @@
 static const char *VERSION        = "1.0.4";
 static const char *DESCRIPTION    = trNOOP("HD output device for Raspberry Pi");
 
-class cPluginRpiHdDevice : public cPlugin
+class cPluginRpiHdDevice /*: public cPlugin*/
 {
 private:
 
@@ -50,7 +49,7 @@ public:
 	virtual void Stop(void);
 	virtual void Housekeeping(void) {}
 	virtual const char *MainMenuEntry(void) { return NULL; }
-	virtual cOsdObject *MainMenuAction(void) { return NULL; }
+//	virtual cOsdObject *MainMenuAction(void) { return NULL; }
 	virtual cMenuSetupPage *SetupMenu(void);
 	virtual bool SetupParse(const char *Name, const char *Value);
 };
@@ -118,4 +117,3 @@ const char *cPluginRpiHdDevice::CommandLineHelp(void)
 	return cRpiSetup::GetInstance()->CommandLineHelp();
 }
 
-VDRPLUGINCREATOR(cPluginRpiHdDevice); // TO BE REMOVED on Enigma2
