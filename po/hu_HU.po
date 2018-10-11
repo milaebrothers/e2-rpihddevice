@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vdr-rpihddevice 1.0.0\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2018-10-01 18:32+0000\n"
+"POT-Creation-Date: 2018-10-11 19:36+0000\n"
 "PO-Revision-Date: 2015-10-16 13:49+0200\n"
 "Last-Translator: Füley István <ifuley at tigercomp dot ro>\n"
 "Language-Team: Hungarian\n"
@@ -17,9 +17,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 1.6.11\n"
-
-msgid "video format not supported!"
-msgstr "A videoformátum nem támogatott!"
 
 msgid "HD output device for Raspberry Pi"
 msgstr "Raspberry Pi HD kimeneti eszköz "
@@ -77,6 +74,9 @@ msgstr "Hang kimenet"
 
 msgid "Digital Audio Format"
 msgstr "Digitális hang formátum"
+
+#~ msgid "video format not supported!"
+#~ msgstr "A videoformátum nem támogatott!"
 
 #~ msgid "Use GPU accelerated OSD"
 #~ msgstr "Hardveresen (GPU) gyorsított OSD"

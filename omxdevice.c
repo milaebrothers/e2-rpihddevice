@@ -27,7 +27,6 @@
 #include <vdr/thread.h>
 #include <vdr/remux.h>
 #include <vdr/tools.h>
-#include <vdr/skins.h>
 
 #include <string.h>
 
@@ -377,7 +376,7 @@ int cOmxDevice::PlayVideo(const uchar *Data, int Length, bool EndOfFrame)
 				DLOG("set video codec to %s", cVideoCodec::Str(m_videoCodec));
 			}
 			else
-				Skins.QueueMessage(mtError, tr("video format not supported!"));
+				eDebug("video format not supported!");
 		}
 	}
 

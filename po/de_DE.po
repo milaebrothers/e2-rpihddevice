@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vdr-rpihddevice 1.0.0\n"
 "Report-Msgid-Bugs-To: <see README>\n"
-"POT-Creation-Date: 2018-10-01 18:32+0000\n"
+"POT-Creation-Date: 2018-10-11 19:36+0000\n"
 "PO-Revision-Date: 2016-04-27 15:11+0100\n"
 "Last-Translator: Thomas Reufer <thomas@reufer.ch>\n"
 "Language-Team: German\n"
@@ -17,9 +17,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 1.5.5\n"
-
-msgid "video format not supported!"
-msgstr "Videoformat nicht unterstützt!"
 
 msgid "HD output device for Raspberry Pi"
 msgstr "HD Ausgabegerät für Raspberry Pi"
@@ -77,6 +74,9 @@ msgstr "Audioanschluss"
 
 msgid "Digital Audio Format"
 msgstr "Digitales Audioformat"
+
+#~ msgid "video format not supported!"
+#~ msgstr "Videoformat nicht unterstützt!"
 
 #~ msgid "Use GPU accelerated OSD"
 #~ msgstr "OSD mit GPU-Unterstützung"
