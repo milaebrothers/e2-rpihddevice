@@ -22,7 +22,6 @@
 #include "omx.h"
 
 #include <vdr/tools.h>
-#include <vdr/remux.h>
 
 extern "C" {
 #include <libavcodec/avcodec.h>

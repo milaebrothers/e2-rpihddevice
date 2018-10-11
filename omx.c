@@ -24,7 +24,6 @@
 #include "setup.h"
 
 #include <vdr/tools.h>
-#include <vdr/thread.h>
 
 extern "C" {
 #include "ilclient.h"
