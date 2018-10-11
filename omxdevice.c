@@ -24,10 +24,6 @@
 #include "setup.h"
 #include "tools.h"
 
-#include <vdr/thread.h>
-#include <vdr/remux.h>
-#include <vdr/tools.h>
-
 #include <string.h>
 
 #define S(x) ((int)(floor(x * pow(2, 16))))
