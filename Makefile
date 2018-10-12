@@ -57,9 +57,11 @@ CXXFLAGS += -D__STDC_CONSTANT_MACROS
 ILCDIR   =ilclient
 VCINCDIR =$(SDKSTAGE)/opt/vc/include
 VCLIBDIR =$(SDKSTAGE)/opt/vc/lib
+SIGC2LIBDIR =/usr/include/sigc++-2.0
+SIGC2LIBDIR2 =/usr/lib/arm-linux-gnueabihf/sigc++-2.0/include
 
 INCLUDES += -I$(ILCDIR) -I$(VCINCDIR) -I$(VCINCDIR)/interface/vcos/pthreads 
-INCLUDES += -I$(VCINCDIR)/interface/vmcs_host/linux
+INCLUDES += -I$(VCINCDIR)/interface/vmcs_host/linux -I$(SIGC2LIBDIR) -I$(SIGC2LIBDIR2)
 
 LDLIBS  += -lbcm_host -lvcos -lvchiq_arm -lopenmaxil -lGLESv2 -lEGL -lpthread -lrt
 LDLIBS  += -Wl,--whole-archive $(ILCDIR)/libilclient.a -Wl,--no-whole-archive

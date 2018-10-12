@@ -1,17 +1,17 @@
-This is a "plugin" for the Video Disk Recorder (VDR).
+This is a "plugin" for Enigma2.
 
 Written by:                  Thomas Reufer <thomas@reufer.ch>
 
-Project's homepage:          http://projects.vdr-developer.org/projects/plg-rpihddevice
+Modified by:				 PLi-metas Team			
 
-Latest version available at: git://projects.vdr-developer.org/vdr-plugin-rpihddevice.git
+Project's homepage:          https://github.com/PLi-metas/e2-rpihddevice
 
 See the file COPYING for license information.
 
 Description:
 
-  VDR HD output device for Raspberry Pi. The plugin makes use of the Raspberry
-  Pi's VideoCore GPU and provides a lightweight implementation for a VDR output
+  Enigma2 HD output device for Raspberry Pi. The plugin makes use of the Raspberry
+  Pi's VideoCore GPU and provides a lightweight implementation for a Enigma2 output
   device.
 
 Features:
@@ -36,7 +36,7 @@ Requirements:
   - valid MPEG-2 license when watching MPEG-2 streams
   - Raspberry Pi userland libraries: https://github.com/raspberrypi/userland
   - Raspberry Pi firmware version of 2015/01/18 or newer
-  
+ 
 Install:
 
   Get the source code either as archive or with git and compile like any other

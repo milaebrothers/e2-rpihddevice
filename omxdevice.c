@@ -372,7 +372,7 @@ int cOmxDevice::PlayVideo(const uchar *Data, int Length, bool EndOfFrame)
 				DLOG("set video codec to %s", cVideoCodec::Str(m_videoCodec));
 			}
 			else
-				eDebug("video format not supported!");
+				eDebug("[cOmxDevice] Video format not supported!");
 		}
 	}
 
