@@ -55,9 +55,8 @@ const uchar cOmxDevice::s_pesVideoHeader[14] = {
 const uchar cOmxDevice::s_mpeg2EndOfSequence[4]  = { 0x00, 0x00, 0x01, 0xb7 };
 const uchar cOmxDevice::s_h264EndOfSequence[8] = { 0x00, 0x00, 0x01, 0x0a, 0x00, 0x00, 0x01, 0x0b };
 
-cOmxDevice::cOmxDevice(void (*onPrimaryDevice)(void), int display, int layer) :
+cOmxDevice::cOmxDevice(int display, int layer) :
 	cDevice(),
-	m_onPrimaryDevice(onPrimaryDevice),
 	m_omx(new cOmx()),
 	m_audio(new cRpiAudioDecoder(m_omx)),
 	m_mutex(new cMutex()),
@@ -784,13 +783,6 @@ bool cOmxDevice::Poll(cPoller &Poller, int TimeoutMs)
 		cCondWait::SleepMs(5);
 	}
 	return true;
-}
-
-void cOmxDevice::MakePrimaryDevice(bool On)
-{
-	if (On && m_onPrimaryDevice)
-		m_onPrimaryDevice();
-	cDevice::MakePrimaryDevice(On);
 }
 
 cVideoCodec::eCodec cOmxDevice::ParseVideoCodec(const uchar *data, int length)

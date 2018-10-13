@@ -43,7 +43,7 @@ PACKAGE = vdr-$(ARCHIVE)
 
 ### The name of the shared object file:
 
-SOFILE = libvdr-$(PLUGIN).so
+SOFILE = e2-$(PLUGIN).so
 
 ### Includes and Defines (add further entries here):
 

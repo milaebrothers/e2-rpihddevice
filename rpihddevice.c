@@ -24,19 +24,15 @@
 static const char *VERSION        = "1.0.4";
 static const char *DESCRIPTION    = trNOOP("HD output device for Raspberry Pi");
 
-class cPluginRpiHdDevice /*: public cPlugin*/
+class cRpiHdDevice /*: public cPlugin*/
 {
 private:
 
 	cOmxDevice *m_device;
 
-	static void OnPrimaryDevice(void)
-	{
-	}
-
 public:
-	cPluginRpiHdDevice(void);
-	virtual ~cPluginRpiHdDevice();
+	cRpiHdDevice(void);
+	virtual ~cRpiHdDevice();
 	virtual const char *Version(void) { return VERSION; }
 	virtual const char *Description(void) { return tr(DESCRIPTION); }
 	virtual const char *CommandLineHelp(void);
@@ -51,18 +47,18 @@ public:
 	virtual bool SetupParse(const char *Name, const char *Value);
 };
 
-cPluginRpiHdDevice::cPluginRpiHdDevice(void) : 
+cRpiHdDevice::cRpiHdDevice(void) : 
 	m_device(0)
 {
 }
 
-cPluginRpiHdDevice::~cPluginRpiHdDevice()
+cRpiHdDevice::~cRpiHdDevice()
 {
 	cRpiSetup::DropInstance();
 	cRpiDisplay::DropInstance();
 }
 
-bool cPluginRpiHdDevice::Initialize(void)
+bool cRpiHdDevice::Initialize(void)
 {
 	if (!cRpiSetup::HwInit())
 		return false;
@@ -71,8 +67,7 @@ bool cPluginRpiHdDevice::Initialize(void)
 	if (!cRpiSetup::IsVideoCodecSupported(cVideoCodec::eMPEG2))
 		DLOG("MPEG2 video decoder not enabled!");
 
-	m_device = new cOmxDevice(&OnPrimaryDevice,
-			cRpiDisplay::GetId(), cRpiSetup::VideoLayer());
+	m_device = new cOmxDevice(cRpiDisplay::GetId(), cRpiSetup::VideoLayer());
 
 	if (m_device)
 		return !m_device->Init();
@@ -80,12 +75,12 @@ bool cPluginRpiHdDevice::Initialize(void)
 	return false;
 }
 
-bool cPluginRpiHdDevice::Start(void)
+bool cRpiHdDevice::Start(void)
 {
 	return m_device->Start();
 }
 
-void cPluginRpiHdDevice::Stop(void)
+void cRpiHdDevice::Stop(void)
 {
 }
 
@@ -94,22 +89,22 @@ void cPluginRpiHdDevice::Stop(void)
 	-	Remove setup page
 	-	Passed fixed setup value
 	-	Remove fixed value and read from Enigma2	*/
-cMenuSetupPage* cPluginRpiHdDevice::SetupMenu(void)
+cMenuSetupPage* cRpiHdDevice::SetupMenu(void)
 {
 	return cRpiSetup::GetInstance()->GetSetupPage();
 }
 
-bool cPluginRpiHdDevice::SetupParse(const char *Name, const char *Value)
+bool cRpiHdDevice::SetupParse(const char *Name, const char *Value)
 {
 	return cRpiSetup::GetInstance()->Parse(Name, Value);
 }
 /*	Process Argument passed on start TO BE REMOVED or TUNED on Enigma2	*/
-bool cPluginRpiHdDevice::ProcessArgs(int argc, char *argv[])
+bool cRpiHdDevice::ProcessArgs(int argc, char *argv[])
 {
 	return cRpiSetup::GetInstance()->ProcessArgs(argc, argv);
 }
 /*	Show command line help TO BE REMOVED on Enigma2	*/
-const char *cPluginRpiHdDevice::CommandLineHelp(void)
+const char *cRpiHdDevice::CommandLineHelp(void)
 {
 	return cRpiSetup::GetInstance()->CommandLineHelp();
 }

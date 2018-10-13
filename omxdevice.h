@@ -35,59 +35,155 @@ class cOmxDevice : cDevice
 
 public:
 
-	cOmxDevice(void (*onPrimaryDevice)(void), int display, int layer);
+	cOmxDevice(int display, int layer);
 	virtual ~cOmxDevice();
 
 	virtual cString DeviceName(void) const { return "rpihddevice"; }
-
+		///< Returns a string identifying the name of this device.
+		///< The default implementation returns an empty string.
 	virtual int Init(void);
 	virtual int DeInit(void);
 
 	virtual bool Start(void);
 
 	virtual bool HasDecoder(void) const { return true; }
+		///< Tells whether this device has an MPEG decoder.
 	virtual bool CanReplay(void)  const { return true; }
+		///< Returns true if this device can currently start a replay session.
 	virtual bool HasIBPTrickSpeed(void);
-
+		///< Returns true if this device can handle all frames in 'fast forward'
+		///< trick speeds.
 	virtual void GetOsdSize(int &Width, int &Height, double &PixelAspect);
+		///< Returns the Width, Height and PixelAspect ratio the OSD should use
+		///< to best fit the resolution of the output device. If PixelAspect
+		///< is not 1.0, the OSD may take this as a hint to scale its
+		///< graphics in a way that, e.g., a circle will actually
+		///< show up as a circle on the screen, and not as an ellipse.
+		///< Values greater than 1.0 mean to stretch the graphics in the
+		///< vertical direction (or shrink it in the horizontal direction,
+		///< depending on which dimension shall be fixed). Values less than
+		///< 1.0 work the other way round. Note that the OSD is not guaranteed
+		///< to actually use this hint.
 	virtual void GetVideoSize(int &Width, int &Height, double &VideoAspect);
-
+		///< Returns the Width, Height and VideoAspect ratio of the currently
+		///< displayed video material. Width and Height are given in pixel
+		///< (e.g. 720x576) and VideoAspect is e.g. 1.33333 for a 4:3 broadcast,
+		///< or 1.77778 for 16:9.
+		///< The default implementation returns 0 for Width and Height
+		///< and 1.0 for VideoAspect.
 	virtual cRect CanScaleVideo(const cRect &Rect, int Alignment = taCenter)
 		{ return Rect; }
+		///< Asks the output device whether it can scale the currently shown video in
+		///< such a way that it fits into the given Rect, while retaining its proper
+		///< aspect ratio. If the scaled video doesn't exactly fit into Rect, Alignment
+		///< is used to determine how to align the actual rectangle with the requested
+		///< one. The actual rectangle can be smaller, larger or the same size as the
+		///< given Rect, and its location may differ, depending on the capabilities of
+		///< the output device, which may not be able to display a scaled video at
+		///< arbitrary sizes and locations. The device shall, however, do its best to
+		///< match the requested Rect as closely as possible, preferring a size and
+		///< location that fits completely into the requested Rect if possible.
+		///< Returns the rectangle that can actually be used when scaling the video.
+		///< A skin plugin using this function should rearrange its content according
+		///< to the rectangle returned from calling this function, and should especially
+		///< be prepared for cases where the returned rectangle is way off the requested
+		///< Rect, or even Null. In such cases, the skin may want to fall back to
+		///< working with full screen video.
+		///< The coordinates of Rect are in the range of the width and height returned
+		///< by GetOsdSize().
+		///< If this device can't scale the video, a Null rectangle is returned (this
+		///< is also the default implementation).
 	virtual void ScaleVideo(const cRect &Rect = cRect::Null);
-
+		///< Scales the currently shown video in such a way that it fits into the given
+		///< Rect. Rect should be one retrieved through a previous call to
+		///< CanScaleVideo() (otherwise results may be undefined).
+		///< Even if video output is scaled, the functions GetVideoSize() and
+		///< GetOsdSize() must still return the same values as if in full screen mode!
+		///< If this device can't scale the video, nothing happens.
+		///< To restore full screen video, call this function with a Null rectangle.
 	virtual bool SetPlayMode(ePlayMode PlayMode);
-
+		///< Sets the device into the given play mode.
+		///< Returns true if the operation was successful.
 	virtual void StillPicture(const uchar *Data, int Length);
-
+		///< Displays the given I-frame as a still picture.
+		///< Data points either to a series of TS (first byte is 0x47) or PES (first byte
+		///< is 0x00) data of the given Length. The default implementation
+		///< converts TS to PES and calls itself again, allowing a derived class
+		///< to display PES if it can't handle TS directly.
 	virtual int PlayAudio(const uchar *Data, int Length, uchar Id);
+		///< Plays the given data block as audio.
+		///< Data points to exactly one complete PES packet of the given Length.
+		///< Id indicates the type of audio data this packet holds.
+		///< PlayAudio() shall process the packet either as a whole (returning
+		///< Length) or not at all (returning 0 or -1 and setting 'errno' accordingly).
+		///< Returns the number of bytes actually taken from Data, or -1
+		///< in case of an error.
 	virtual int PlayVideo(const uchar *Data, int Length)
 		{ return PlayVideo(Data, Length, false); }
 
 	virtual int PlayVideo(const uchar *Data, int Length, bool EndOfFrame);
-
+		///< Plays the given data block as video.
+		///< Data points to exactly one complete PES packet of the given Length.
+		///< PlayVideo() shall process the packet either as a whole (returning
+		///< Length) or not at all (returning 0 or -1 and setting 'errno' accordingly).
+		///< Returns the number of bytes actually taken from Data, or -1
+		///< in case of an error.
 	virtual int64_t GetSTC(void);
-
+		///< Gets the current System Time Counter, which can be used to
+		///< synchronize audio, video and subtitles. If this device is able to
+		///< replay, it must provide an STC.
+		///< The value returned doesn't need to be an actual "clock" value,
+		///< it is sufficient if it holds the PTS (Presentation Time Stamp) of
+		///< the most recently presented frame. A proper value must be returned
+		///< in normal replay mode as well as in any trick modes (like slow motion,
+		///< fast forward/rewind).
+		///< Only the lower 32 bit of this value are actually used, since some
+		///< devices can't handle the msb correctly.
 	virtual uchar *GrabImage(int &Size, bool Jpeg = true, int Quality = -1,
 			int SizeX = -1, int SizeY = -1);
-
+		///< Grabs the currently visible screen image.
+		///< Size is the size of the returned data block.
+		///< If Jpeg is true it will write a JPEG file. Otherwise a PNM file will be written.
+		///< Quality is the compression factor for JPEG. 1 will create a very blocky
+		///< and small image, 70..80 will yield reasonable quality images while keeping the
+		///< image file size around 50 KB for a full frame. The default will create a big
+		///< but very high quality image.
+		///< SizeX is the number of horizontal pixels in the frame (default is the current screen width).
+		///< SizeY is the number of vertical pixels in the frame (default is the current screen height).
+		///< Returns a pointer to the grabbed image data, or NULL in case of an error.
+		///< The caller takes ownership of the returned memory and must free() it once it isn't needed any more.
 #if APIVERSNUM >= 20103
 	virtual void TrickSpeed(int Speed, bool Forward);
 #else
 	virtual void TrickSpeed(int Speed);
 #endif
-
+		///< Sets the device into a mode where replay is done slower.
+		///< Every single frame shall then be displayed the given number of
+		///< times. Forward is true if replay is done in the normal (forward)
+		///< direction, false if it is done reverse.
+		///< The cDvbPlayer uses the following values for the various speeds:
+		///<                   1x   2x   3x
+		///< Fast Forward       6    3    1
+		///< Fast Reverse       6    3    1
+		///< Slow Forward       8    4    2
+		///< Slow Reverse      63   48   24
 	virtual void Clear(void);
+		///< Clears all video and audio data from the device.
+		///< A derived class must call the base class function to make sure
+		///< all registered cAudio objects are notified.
 	virtual void Play(void);
+		///< Sets the device into play mode (after a previous trick
+		///< mode)
 	virtual void Freeze(void);
-
+		///< Puts the device into "freeze frame" mode.
 	virtual void SetVolumeDevice(int Volume);
-
+		///< Sets the audio volume on this device (Volume = 0...255).
 	virtual bool Poll(cPoller &Poller, int TimeoutMs = 0);
-
+		///< Returns true if the device itself or any of the file handles in
+		///< Poller is ready for further action.
+		///< If TimeoutMs is not zero, the device will wait up to the given number
+		///< of milliseconds before returning in case it can't accept any data.
 protected:
-
-	virtual void MakePrimaryDevice(bool On);
 
 	enum eDirection {
 		eForward,
@@ -149,7 +245,6 @@ protected:
 
 private:
 
-	void (*m_onPrimaryDevice)(void);
 	virtual cVideoCodec::eCodec ParseVideoCodec(const uchar *data, int length);
 
 	static void OnBufferStall(void *data)
