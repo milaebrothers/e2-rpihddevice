@@ -19,9 +19,9 @@
 
 #include "omxdevice.h"
 #include "omx.h"
-#include "audio.h"
-#include "display.h"
-#include "setup.h"
+#include "rpiaudio.h"
+#include "rpidisplay.h"
+#include "rpisetup.h"
 
 #include <string.h>
 

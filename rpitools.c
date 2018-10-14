@@ -19,7 +19,7 @@
 
 #include <limits.h>
 #include <vdr/tools.h>
-#include "tools.h"
+#include "rpitools.h"
 #include <algorithm>
 
 /*

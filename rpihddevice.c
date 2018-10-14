@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 */
 #include "omxdevice.h"
-#include "setup.h"
-#include "display.h"
+#include "rpisetup.h"
+#include "rpidisplay.h"
 
 static const char *VERSION        = "1.0.4";
 static const char *DESCRIPTION    = trNOOP("HD output device for Raspberry Pi");

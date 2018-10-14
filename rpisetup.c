@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include "setup.h"
-#include "display.h"
+#include "rpisetup.h"
+#include "rpidisplay.h"
 
 #include <vdr/menuitems.h>
 #include <lib/base/eerror.h>

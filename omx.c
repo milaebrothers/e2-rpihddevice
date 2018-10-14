@@ -20,8 +20,8 @@
 #include <queue>
 
 #include "omx.h"
-#include "display.h"
-#include "setup.h"
+#include "rpidisplay.h"
+#include "rpisetup.h"
 
 #include <vdr/tools.h>
 #include <lib/base/eerror.h>

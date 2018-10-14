@@ -22,7 +22,7 @@
 
 #include <vdr/device.h>		//#include <lib/base/condVar.h>
 
-#include "tools.h"
+#include "rpitools.h"
 
 #include <lib/base/eerror.h>
 
