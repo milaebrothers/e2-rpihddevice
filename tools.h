@@ -20,16 +20,6 @@
 #ifndef TOOLS_H
 #define TOOLS_H
 
-#define ELOG(a...) esyslog("rpihddevice: " a)
-#define ILOG(a...) isyslog("rpihddevice: " a)
-#define DLOG(a...) dsyslog("rpihddevice: " a)
-
-#ifdef DEBUG
-#define DBG(a...)  dsyslog("rpihddevice: " a)
-#else
-#define DBG(a...)  void()
-#endif
-
 class cVideoResolution
 {
 public:

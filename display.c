@@ -18,10 +18,9 @@
  */
 
 #include "display.h"
-#include "tools.h"
 #include "setup.h"
 
-#include <vdr/tools.h>
+#include <lib/base/eerror.h>
 
 extern "C" {
 #include "interface/vmcs_host/vc_tvservice.h"
@@ -40,7 +39,7 @@ cRpiDisplay* cRpiDisplay::GetInstance(void)
 		TV_DISPLAY_STATE_T tvstate;
 		if (!vc_tv_get_display_state(&tvstate))
 		{
-			DBG("default display is %s",
+			eDebug("[cRpiDisplay] default display is %s",
 					tvstate.state & VC_HDMI_HDMI            ? "HDMI" :
 					tvstate.state & VC_HDMI_DVI             ? "DVI"  :
 					tvstate.state & VC_LCD_ATTACHED_DEFAULT ? "LCD"  :
@@ -60,7 +59,7 @@ cRpiDisplay* cRpiDisplay::GetInstance(void)
 						tvstate.display.hdmi.mode);
 		}
 		else
-			ELOG("failed to get default display state!");
+			eLog(1, "[cRpiDisplay] failed to get default display state!");
 
 		if (!s_instance)
 		{
@@ -77,7 +76,7 @@ cRpiDisplay* cRpiDisplay::GetInstance(void)
 		}
 		if (!s_instance)
 		{
-			ELOG("failed to get display information!");
+			eLog(1, "[cRpiDisplay] failed to get display information!");
 			s_instance = new cRpiDefaultDisplay(id, 720, 576, SDTV_ASPECT_4_3);
 		}
 	}
@@ -157,7 +156,7 @@ int cRpiDisplay::SetVideoFormat(const cVideoFrameFormat *frameFormat)
 int cRpiDisplay::SetHvsSyncUpdate(cScanMode::eMode scanMode)
 {
 	char response[64];
-	DBG("SetHvsSyncUpdate(%s)", cScanMode::Str(scanMode));
+	eDebug("[cRpiDisplay] SetHvsSyncUpdate(%s)", cScanMode::Str(scanMode));
 	return vc_gencmd(response, sizeof(response), "hvs_update_fields %d",
 			scanMode == cScanMode::eTopFieldFirst    ? 1 :
 			scanMode == cScanMode::eBottomFieldFirst ? 2 : 0);
@@ -262,7 +261,7 @@ void cRpiDisplay::GetModeFormat(const cVideoFrameFormat *format,
 		break;
 
 	default:
-		ILOG("unknown video frame format: %dx%d@%d%s PAR(%d:%d)",
+		eLog(2, "[cRpiDisplay] unknown video frame format: %dx%d@%d%s PAR(%d:%d)",
 				format->width, format->height, format->frameRate,
 				format->Interlaced() ? "i" : "p",
 				format->pixelWidth, format->pixelHeight);
@@ -411,10 +410,10 @@ cRpiHDMIDisplay::cRpiHDMIDisplay(int id, int width, int height, int frameRate,
 
 	if (m_modes->nModes)
 	{
-		DLOG("supported HDMI modes:");
+		eLog(3, "[cRpiHDMIDisplay] supported HDMI modes:");
 		for (int i = 0; i < m_modes->nModes; i++)
 		{
-			DLOG("%s[%02d]: %4dx%4d@%2d%s | %*s | %3d.%03dMHz%s%s",
+			eLog(3, "[cRpiHDMIDisplay] %s[%02d]: %4dx%4d@%2d%s | %*s | %3d.%03dMHz%s%s",
 				m_modes->modes[i].group == HDMI_RES_GROUP_CEA ? "CEA" :
 				m_modes->modes[i].group == HDMI_RES_GROUP_DMT ? "DMT" : "---",
 				m_modes->modes[i].code,
@@ -441,7 +440,7 @@ cRpiHDMIDisplay::cRpiHDMIDisplay(int id, int width, int height, int frameRate,
 		}
 	}
 	else
-		ELOG("failed to read HDMI EDID information!");
+		eLog(1, "[cRpiHDMIDisplay] failed to read HDMI EDID information!");
 
 }
 
@@ -490,14 +489,14 @@ int cRpiHDMIDisplay::SetMode(int width, int height, int frameRate,
 		m_aspectRatio = m_modes->modes[mode].aspect_ratio;
 		m_interlaced = m_modes->modes[mode].scan_mode;
 
-		DLOG("setting HDMI mode to %dx%d@%2d%s (%s)", m_width, m_height,
+		eLog(3, "[cRpiHDMIDisplay] setting HDMI mode to %dx%d@%2d%s (%s)", m_width, m_height,
 				m_frameRate, m_interlaced ? "i" : "p",
 				AspectRatioStr(m_aspectRatio));
 
 		return SetMode(m_modes->modes[mode].group, m_modes->modes[mode].code);
 	}
 
-	DLOG("failed to set HDMI mode to %dx%d@%2d%s (%s)",
+	eLog(3, "[cRpiHDMIDisplay] failed to set HDMI mode to %dx%d@%2d%s (%s)",
 			width, height, frameRate, interlaced ? "i" : "p",
 			AspectRatioStr(aspectRatio));
 
@@ -509,14 +508,14 @@ int cRpiHDMIDisplay::SetMode(int group, int mode)
 	int ret = 0;
 	if (group != m_group || mode != m_mode)
 	{
-		DBG("cHDMI::SetMode(%s, %d)",
+		eDebug("[cRpiHDMIDisplay] cHDMI::SetMode(%s, %d)",
 			group == HDMI_RES_GROUP_DMT ? "DMT" :
 			group == HDMI_RES_GROUP_CEA ? "CEA" : "unknown", mode);
 
 		ret = vc_tv_hdmi_power_on_explicit_new(HDMI_MODE_HDMI,
 				(HDMI_RES_GROUP_T)group, mode);
 		if (ret)
-			ELOG("failed to set HDMI mode!");
+			eLog(1, "[cRpiHDMIDisplay] failed to set HDMI mode!");
 		else
 		{
 			m_group = group;

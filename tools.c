@@ -31,10 +31,10 @@ cRational::cRational(double d) :
 	num(0), den(0)
 {
 	int exp;
-	frexp(d, &exp);
+	frexp(d, &exp);					/*	call to	vdr/tools.h		*/
 
 	den = 1LL << (29 - std::max(exp - 1, 0));
-	num = floor(d * den + 0.5);
+	num = floor(d * den + 0.5);		/*	call to	vdr/tools.h		*/
 
 	Reduce(INT_MAX);
 }

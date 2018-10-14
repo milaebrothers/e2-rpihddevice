@@ -21,7 +21,6 @@
 #define SETUP_H
 
 #include "omx.h"
-#include "tools.h"
 
 #define VC_DISPLAY_DEFAULT     0
 #define VC_DISPLAY_LCD         4

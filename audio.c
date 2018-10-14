@@ -21,7 +21,8 @@
 #include "setup.h"
 #include "omx.h"
 
-#include <vdr/tools.h>
+#include <lib/base/eerror.h>
+#define KILOBYTE(n) ((n) * 1024)
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -344,7 +345,7 @@ private:
 
 		if (offset)
 		{
-			DBG("audio parser skipped %u of %u bytes", offset, m_size);
+			eDebug("[cRpiAudioDecoder] audio parser skipped %u of %u bytes", offset, m_size);
 			Shrink(offset, true);
 		}
 
@@ -1026,7 +1027,7 @@ public:
 			cRpiAudioPort::ePort newPort = cRpiSetup::GetAudioPort();
 			cAudioCodec::eCodec newCodec = cAudioCodec::ePCM;
 
-			DLOG("new audio codec: %dch %s", channels, cAudioCodec::Str(codec));
+			eLog(3, "[cRpiAudioRender] new audio codec: %dch %s", channels, cAudioCodec::Str(codec));
 
 			if (newPort == cRpiAudioPort::eHDMI)
 			{
@@ -1107,7 +1108,7 @@ private:
 			m_omx->SetupAudioRender(m_codec, m_outChannels, m_port,
 					m_samplingRate, m_frameSize);
 
-			DLOG("set %s audio output format to %dch %s, %d.%dkHz%s",
+			eLog(3, "[cRpiAudioRender] set %s audio output format to %dch %s, %d.%dkHz%s",
 					cRpiAudioPort::Str(m_port), m_outChannels,
 					cAudioCodec::Str(m_codec),
 					m_samplingRate / 1000, (m_samplingRate % 1000) / 100,
@@ -1140,7 +1141,7 @@ private:
 			m_resamplerConfigured = true;
 		}
 		else
-			ELOG("failed to allocate resampling context!");
+			eLog(1, "[cRpiAudioRender] failed to allocate resampling context!");
 	}
 #endif
 
@@ -1222,13 +1223,13 @@ int cRpiAudioDecoder::Init(void)
 			m_codecs[codec].context = avcodec_alloc_context3(m_codecs[codec].codec);
 			if (!m_codecs[codec].context)
 			{
-				ELOG("failed to allocate %s context!", cAudioCodec::Str(codec));
+				eLog(1, "[cRpiAudioDecoder] failed to allocate %s context!", cAudioCodec::Str(codec));
 				ret = -1;
 				break;
 			}
 			if (avcodec_open2(m_codecs[codec].context, m_codecs[codec].codec, NULL) < 0)
 			{
-				ELOG("failed to open %s decoder!", cAudioCodec::Str(codec));
+				eLog(1, "[cRpiAudioDecoder] failed to open %s decoder!", cAudioCodec::Str(codec));
 				ret = -1;
 				break;
 			}
@@ -1304,14 +1305,14 @@ bool cRpiAudioDecoder::Poll(void)
 
 void cRpiAudioDecoder::HandleAudioSetupChanged()
 {
-	DBG("HandleAudioSetupChanged()");
+	eDebug("[cRpiAudioDecoder] HandleAudioSetupChanged()");
 	m_setupChanged = true;
 }
 
 void cRpiAudioDecoder::Action(void)
 {
 	SetPriority(-15);
-	DLOG("cAudioDecoder() thread started");
+	eLog(3, "[cRpiAudioDecoder] cAudioDecoder() thread started");
 
 	unsigned int channels = 0;
 	unsigned int samplingRate = 0;
@@ -1320,7 +1321,7 @@ void cRpiAudioDecoder::Action(void)
 	AVFrame *frame = av_frame_alloc();
 	if (!frame)
 	{
-		ELOG("failed to allocate audio frame!");
+		eLog(1, "[cRpiAudioDecoder] failed to allocate audio frame!");
 		return;
 	}
 
@@ -1402,7 +1403,7 @@ void cRpiAudioDecoder::Action(void)
 				}
 				else
 				{
-					ELOG("failed to decode audio frame!");
+					eLog(1, "[cRpiAudioDecoder] failed to decode audio frame!");
 					m_parser->Reset();
 					av_frame_unref(frame);
 					continue;
@@ -1426,7 +1427,7 @@ void cRpiAudioDecoder::Action(void)
 	}
 
 	av_frame_free(&frame);
-	DLOG("cAudioDecoder() thread ended");
+	eLog(3, "[cRpiAudioDecoder] cAudioDecoder() thread ended");
 }
 
 void cRpiAudioDecoder::Log(void* ptr, int level, const char* fmt, va_list vl)
@@ -1438,9 +1439,9 @@ void cRpiAudioDecoder::Log(void* ptr, int level, const char* fmt, va_list vl)
 	vsnprintf(line, sizeof(line), fmt, vl);
 
 	if (level <= AV_LOG_ERROR)
-		ELOG("[libav] %s", line);
+		eLog(1, "[cRpiAudioDecoder] [libav] %s", line);
 	else if (level <= AV_LOG_INFO)
-		ILOG("[libav] %s", line);
+		eLog(2, "[cRpiAudioDecoder] [libav] %s", line);
 	else if (level <= AV_LOG_VERBOSE)
-		DLOG("[libav] %s", line);
+		eLog(3, "[cRpiAudioDecoder] [libav] %s", line);
 }

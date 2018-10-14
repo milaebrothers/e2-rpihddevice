@@ -19,7 +19,6 @@
 #include "omxdevice.h"
 #include "setup.h"
 #include "display.h"
-#include "tools.h"
 
 static const char *VERSION        = "1.0.4";
 static const char *DESCRIPTION    = trNOOP("HD output device for Raspberry Pi");
@@ -65,7 +64,7 @@ bool cRpiHdDevice::Initialize(void)
 
 	// test whether MPEG2 license is available
 	if (!cRpiSetup::IsVideoCodecSupported(cVideoCodec::eMPEG2))
-		DLOG("MPEG2 video decoder not enabled!");
+		eLog(3, "[cRpiHdDevice] MPEG2 video decoder not enabled!");
 
 	m_device = new cOmxDevice(cRpiDisplay::GetId(), cRpiSetup::VideoLayer());
 

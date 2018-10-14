@@ -24,6 +24,8 @@
 #include "setup.h"
 
 #include <vdr/tools.h>
+#include <lib/base/eerror.h>
+#define KILOBYTE(n) ((n) * 1024)
 
 extern "C" {
 #include "ilclient.h"
@@ -191,7 +193,7 @@ const char* cOmx::errStr(int err)
 
 void cOmx::Action(void)
 {
-	cTimeMs timer;
+	cTimeMs timer;			/*	call to	vdr/tools.h		*/
 	while (Running())
 	{
 		while (cOmxEvents::Event* event = m_portEvents->Get())
@@ -283,7 +285,7 @@ void cOmx::HandlePortBufferEmptied(eOmxComponent component)
 		break;
 
 	default:
-		ELOG("HandlePortBufferEmptied: invalid component!");
+		eLog(1, "[cOmx] HandlePortBufferEmptied: invalid component!");
 		break;
 	}
 	Unlock();
@@ -292,15 +294,15 @@ void cOmx::HandlePortBufferEmptied(eOmxComponent component)
 void cOmx::HandlePortSettingsChanged(unsigned int portId)
 {
 	Lock();
-	DBG("HandlePortSettingsChanged(%d)", portId);
+	eDebug("[cOmx] HandlePortSettingsChanged(%d)", portId);
 
 	switch (portId)
 	{
 	case 191:
 		if (ilclient_setup_tunnel(&m_tun[eVideoFxToVideoScheduler], 0, 0) != 0)
-			ELOG("failed to setup up tunnel from video fx to scheduler!");
+			eLog(1, "[cOmx] failed to setup up tunnel from video fx to scheduler!");
 		if (ilclient_change_component_state(m_comp[eVideoScheduler], OMX_StateExecuting) != 0)
-			ELOG("failed to enable video scheduler!");
+			eLog(1, "[cOmx] failed to enable video scheduler!");
 		break;
 
 	case 131:
@@ -309,21 +311,21 @@ void cOmx::HandlePortSettingsChanged(unsigned int portId)
 		portdef.nPortIndex = 131;
 		if (OMX_GetParameter(ILC_GET_HANDLE(m_comp[eVideoDecoder]), OMX_IndexParamPortDefinition,
 				&portdef) != OMX_ErrorNone)
-			ELOG("failed to get video decoder port format!");
+			eLog(1, "[cOmx] failed to get video decoder port format!");
 
 		OMX_CONFIG_POINTTYPE pixelAspect;
 		OMX_INIT_STRUCT(pixelAspect);
 		pixelAspect.nPortIndex = 131;
 		if (OMX_GetParameter(ILC_GET_HANDLE(m_comp[eVideoDecoder]), OMX_IndexParamBrcmPixelAspectRatio,
 				&pixelAspect) != OMX_ErrorNone)
-			ELOG("failed to get pixel aspect ratio!");
+			eLog(1, "[cOmx] failed to get pixel aspect ratio!");
 
 		OMX_CONFIG_INTERLACETYPE interlace;
 		OMX_INIT_STRUCT(interlace);
 		interlace.nPortIndex = 131;
 		if (OMX_GetConfig(ILC_GET_HANDLE(m_comp[eVideoDecoder]), OMX_IndexConfigCommonInterlace,
 				&interlace) != OMX_ErrorNone)
-			ELOG("failed to get video decoder interlace config!");
+			eLog(1, "[cOmx] failed to get video decoder interlace config!");
 
 		m_videoFrameFormat.width = portdef.format.video.nFrameWidth;
 		m_videoFrameFormat.height = portdef.format.video.nFrameHeight;
@@ -348,7 +350,7 @@ void cOmx::HandlePortSettingsChanged(unsigned int portId)
 		// update: with FW from 2015/01/18 this is not necessary anymore
 		if (m_videoFrameFormat.Interlaced() && m_videoFrameFormat.frameRate >= 50)
 		{
-			DLOG("%di looks implausible, you should use a recent firmware...",
+			eLog(3, "[cOmx] %di looks implausible, you should use a recent firmware...",
 					m_videoFrameFormat.frameRate * 2);
 			//m_videoFormat.interlaced = false;
 		}
@@ -374,7 +376,7 @@ void cOmx::HandlePortSettingsChanged(unsigned int portId)
 					portdef.format.video.nFrameWidth,
 					portdef.format.video.nFrameHeight);
 
-			DBG("using %s deinterlacer", fastDeinterlace ? "fast" : "advanced");
+			eDebug("[cOmx] using %s deinterlacer", fastDeinterlace ? "fast" : "advanced");
 
 			filterparam.nNumParams = 4;
 			filterparam.nParams[0] = 3;
@@ -391,24 +393,24 @@ void cOmx::HandlePortSettingsChanged(unsigned int portId)
 		}
 		if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eVideoFx]),
 				OMX_IndexConfigCommonImageFilterParameters, &filterparam) != OMX_ErrorNone)
-			ELOG("failed to set deinterlacing paramaters!");
+			eLog(1, "[cOmx] failed to set deinterlacing paramaters!");
 
 		if (OMX_SetParameter(ILC_GET_HANDLE(m_comp[eVideoFx]),
 				OMX_IndexParamBrcmExtraBuffers, &extraBuffers) != OMX_ErrorNone)
-			ELOG("failed to set video fx extra buffers!");
+			eLog(1, "[cOmx] failed to set video fx extra buffers!");
 
 		if (ilclient_setup_tunnel(&m_tun[eVideoDecoderToVideoFx], 0, 0) != 0)
-			ELOG("failed to setup up tunnel from video decoder to fx!");
+			eLog(1, "[cOmx] failed to setup up tunnel from video decoder to fx!");
 		if (ilclient_change_component_state(m_comp[eVideoFx], OMX_StateExecuting) != 0)
-			ELOG("failed to enable video fx!");
+			eLog(1, "[cOmx] failed to enable video fx!");
 
 		break;
 
 	case 11:
 		if (ilclient_setup_tunnel(&m_tun[eVideoSchedulerToVideoRender], 0, 0) != 0)
-			ELOG("failed to setup up tunnel from scheduler to render!");
+			eLog(1, "[cOmx] failed to setup up tunnel from scheduler to render!");
 		if (ilclient_change_component_state(m_comp[eVideoRender], OMX_StateExecuting) != 0)
-			ELOG("failed to enable video render!");
+			eLog(1, "[cOmx] failed to enable video render!");
 		break;
 	}
 
@@ -449,7 +451,7 @@ void cOmx::OnEndOfStream(void *instance, COMPONENT_T *comp, OMX_U32 data)
 void cOmx::OnError(void *instance, COMPONENT_T *comp, OMX_U32 data)
 {
 	if ((OMX_S32)data != OMX_ErrorSameState)
-		ELOG("OmxError(%s)", errStr((int)data));
+		eLog(1, "[cOmx] OmxError(%s)", errStr((int)data));
 }
 
 cOmx::cOmx() :
@@ -489,10 +491,10 @@ int cOmx::Init(int display, int layer)
 {
 	m_client = ilclient_init();
 	if (m_client == NULL)
-		ELOG("ilclient_init() failed!");
+		eLog(1, "[cOmx] ilclient_init() failed!");
 
 	if (OMX_Init() != OMX_ErrorNone)
-		ELOG("OMX_Init() failed!");
+		eLog(1, "[cOmx] OMX_Init() failed!");
 
 	ilclient_set_error_callback(m_client, OnError, this);
 	ilclient_set_empty_buffer_done_callback(m_client, OnBufferEmpty, this);
@@ -504,33 +506,33 @@ int cOmx::Init(int display, int layer)
 	if (ilclient_create_component(m_client, &m_comp[eVideoDecoder],
 		"video_decode",	(ILCLIENT_CREATE_FLAGS_T)
 		(ILCLIENT_DISABLE_ALL_PORTS | ILCLIENT_ENABLE_INPUT_BUFFERS)) != 0)
-		ELOG("failed creating video decoder!");
+		eLog(1, "[cOmx] failed creating video decoder!");
 
 	// create image_fx
 	if (ilclient_create_component(m_client, &m_comp[eVideoFx],
 		"image_fx",	ILCLIENT_DISABLE_ALL_PORTS) != 0)
-		ELOG("failed creating video fx!");
+		eLog(1, "[cOmx] failed creating video fx!");
 
 	// create video_render
 	if (ilclient_create_component(m_client, &m_comp[eVideoRender],
 		"video_render",	ILCLIENT_DISABLE_ALL_PORTS) != 0)
-		ELOG("failed creating video render!");
+		eLog(1, "[cOmx] failed creating video render!");
 
 	//create clock
 	if (ilclient_create_component(m_client, &m_comp[eClock],
 		"clock", ILCLIENT_DISABLE_ALL_PORTS) != 0)
-		ELOG("failed creating clock!");
+		eLog(1, "[cOmx] failed creating clock!");
 
 	// create audio_render
 	if (ilclient_create_component(m_client, &m_comp[eAudioRender],
 		"audio_render",	(ILCLIENT_CREATE_FLAGS_T)
 		(ILCLIENT_DISABLE_ALL_PORTS | ILCLIENT_ENABLE_INPUT_BUFFERS)) != 0)
-		ELOG("failed creating audio render!");
+		eLog(1, "[cOmx] failed creating audio render!");
 
 	//create video_scheduler
 	if (ilclient_create_component(m_client, &m_comp[eVideoScheduler],
 		"video_scheduler", ILCLIENT_DISABLE_ALL_PORTS) != 0)
-		ELOG("failed creating video scheduler!");
+		eLog(1, "[cOmx] failed creating video scheduler!");
 
 	// setup tunnels
 	set_tunnel(&m_tun[eVideoDecoderToVideoFx],
@@ -550,10 +552,10 @@ int cOmx::Init(int display, int layer)
 
 	// setup clock tunnels first
 	if (ilclient_setup_tunnel(&m_tun[eClockToVideoScheduler], 0, 0) != 0)
-		ELOG("failed to setup up tunnel from clock to video scheduler!");
+		eLog(1, "[cOmx] failed to setup up tunnel from clock to video scheduler!");
 
 	if (ilclient_setup_tunnel(&m_tun[eClockToAudioRender], 0, 0) != 0)
-		ELOG("failed to setup up tunnel from clock to audio render!");
+		eLog(1, "[cOmx] failed to setup up tunnel from clock to audio render!");
 
 	ilclient_change_component_state(m_comp[eClock], OMX_StateExecuting);
 	ilclient_change_component_state(m_comp[eVideoDecoder], OMX_StateIdle);
@@ -652,7 +654,7 @@ int64_t cOmx::GetSTC(void)
 
 	if (OMX_GetConfig(ILC_GET_HANDLE(m_comp[eClock]),
 		OMX_IndexConfigTimeCurrentMediaTime, &timestamp) != OMX_ErrorNone)
-		ELOG("failed get current clock reference!");
+		eLog(1, "[cOmx] failed get current clock reference!");
 	else
 		stc = TicksToPts(timestamp.nTimestamp);
 
@@ -666,7 +668,7 @@ bool cOmx::IsClockRunning(void)
 
 	if (OMX_GetConfig(ILC_GET_HANDLE(m_comp[eClock]),
 			OMX_IndexConfigTimeClockState, &cstate) != OMX_ErrorNone)
-		ELOG("failed get clock state!");
+		eLog(1, "[cOmx] failed get clock state!");
 
 	if (cstate.eState == OMX_TIME_ClockStateRunning)
 		return true;
@@ -676,7 +678,7 @@ bool cOmx::IsClockRunning(void)
 
 void cOmx::StartClock(bool waitForVideo, bool waitForAudio, int preRollMs)
 {
-	DBG("StartClock(%svideo, %saudio)",
+	eDebug("[cOmx] StartClock(%svideo, %saudio)",
 			waitForVideo ? "" : "no ",
 			waitForAudio ? "" : "no ");
 
@@ -701,7 +703,7 @@ void cOmx::StartClock(bool waitForVideo, bool waitForAudio, int preRollMs)
 
 	if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eClock]),
 			OMX_IndexConfigTimeClockState, &cstate) != OMX_ErrorNone)
-		ELOG("failed to start clock!");
+		eLog(1, "[cOmx] failed to start clock!");
 }
 
 void cOmx::StopClock(void)
@@ -713,7 +715,7 @@ void cOmx::StopClock(void)
 
 	if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eClock]),
 			OMX_IndexConfigTimeClockState, &cstate) != OMX_ErrorNone)
-		ELOG("failed to stop clock!");
+		eLog(1, "[cOmx] failed to stop clock!");
 }
 
 void cOmx::SetClockScale(OMX_S32 scale)
@@ -726,7 +728,7 @@ void cOmx::SetClockScale(OMX_S32 scale)
 
 		if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eClock]),
 				OMX_IndexConfigTimeScale, &scaleType) != OMX_ErrorNone)
-			ELOG("failed to set clock scale (%d)!", scale);
+			eLog(1, "[cOmx] failed to set clock scale (%d)!", scale);
 		else
 			m_clockScale = scale;
 	}
@@ -743,7 +745,7 @@ void cOmx::ResetClock(void)
 		if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eClock]),
 			OMX_IndexConfigTimeCurrentAudioReference, &timeStamp)
 				!= OMX_ErrorNone)
-			ELOG("failed to set current audio reference time!");
+			eLog(1, "[cOmx] failed to set current audio reference time!");
 	}
 
 	if (m_clockReference == eClockRefVideo || m_clockReference == eClockRefNone)
@@ -752,7 +754,7 @@ void cOmx::ResetClock(void)
 		if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eClock]),
 			OMX_IndexConfigTimeCurrentVideoReference, &timeStamp)
 				!= OMX_ErrorNone)
-			ELOG("failed to set current video reference time!");
+			eLog(1, "[cOmx] failed to set current video reference time!");
 	}
 }
 
@@ -766,7 +768,7 @@ unsigned int cOmx::GetAudioLatency(void)
 
 	if (OMX_GetConfig(ILC_GET_HANDLE(m_comp[eAudioRender]),
 		OMX_IndexConfigAudioRenderingLatency, &u32) != OMX_ErrorNone)
-		ELOG("failed get audio render latency!");
+		eLog(1, "[cOmx] failed get audio render latency!");
 	else
 		ret = u32.nU32;
 
@@ -786,9 +788,9 @@ void cOmx::SetClockReference(eClockReference clockReference)
 
 		if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eClock]),
 				OMX_IndexConfigTimeActiveRefClock, &refClock) != OMX_ErrorNone)
-			ELOG("failed set active clock reference!");
+			eLog(1, "[cOmx] failed set active clock reference!");
 		else
-			DBG("set active clock reference to %s",
+			eDebug("[cOmx] set active clock reference to %s",
 					clockReference == eClockRefAudio ? "audio" :
 					clockReference == eClockRefVideo ? "video" : "none");
 
@@ -814,7 +816,7 @@ void cOmx::SetClockLatencyTarget(void)
 
 	if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eClock]),
 			OMX_IndexConfigLatencyTarget, &latencyTarget) != OMX_ErrorNone)
-		ELOG("failed set clock latency target!");
+		eLog(1, "[cOmx] failed set clock latency target!");
 
 	// latency target for video render
 	// values set according reference implementation in omxplayer
@@ -829,7 +831,7 @@ void cOmx::SetClockLatencyTarget(void)
 
 	if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eVideoRender]),
 			OMX_IndexConfigLatencyTarget, &latencyTarget) != OMX_ErrorNone)
-		ELOG("failed set video render latency target!");
+		eLog(1, "[cOmx] failed set video render latency target!");
 }
 
 void cOmx::SetPARChangeCallback(bool enable)
@@ -841,7 +843,7 @@ void cOmx::SetPARChangeCallback(bool enable)
 	reqCallback.nIndex = OMX_IndexParamBrcmPixelAspectRatio;
 	if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eVideoDecoder]),
 			OMX_IndexConfigRequestCallback, &reqCallback) != OMX_ErrorNone)
-		ELOG("failed to set video aspect ratio change call back!");
+		eLog(1, "[cOmx] failed to set video aspect ratio change call back!");
 }
 
 void cOmx::SetBufferStallThreshold(int delayMs)
@@ -854,7 +856,7 @@ void cOmx::SetBufferStallThreshold(int delayMs)
 		stallConf.nDelay = delayMs * 1000;
 		if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eVideoDecoder]),
 				OMX_IndexConfigBufferStall, &stallConf) != OMX_ErrorNone)
-			ELOG("failed to set video decoder stall config!");
+			eLog(1, "[cOmx] failed to set video decoder stall config!");
 	}
 
 	// set buffer stall call back
@@ -865,7 +867,7 @@ void cOmx::SetBufferStallThreshold(int delayMs)
 	reqCallback.bEnable = delayMs > 0 ? OMX_TRUE : OMX_FALSE;
 	if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eVideoDecoder]),
 			OMX_IndexConfigRequestCallback, &reqCallback) != OMX_ErrorNone)
-		ELOG("failed to set video decoder stall call back!");
+		eLog(1, "[cOmx] failed to set video decoder stall call back!");
 }
 
 bool cOmx::IsBufferStall(void)
@@ -875,7 +877,7 @@ bool cOmx::IsBufferStall(void)
 	stallConf.nPortIndex = 131;
 	if (OMX_GetConfig(ILC_GET_HANDLE(m_comp[eVideoDecoder]),
 			OMX_IndexConfigBufferStall, &stallConf) != OMX_ErrorNone)
-		ELOG("failed to get video decoder stall config!");
+		eLog(1, "[cOmx] failed to get video decoder stall config!");
 
 	return stallConf.bStalled == OMX_TRUE;
 }
@@ -890,7 +892,7 @@ void cOmx::SetVolume(int vol)
 
 	if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eAudioRender]),
 			OMX_IndexConfigAudioVolume, &volume) != OMX_ErrorNone)
-		ELOG("failed to set volume!");
+		eLog(1, "[cOmx] failed to set volume!");
 }
 
 void cOmx::SetMute(bool mute)
@@ -902,7 +904,7 @@ void cOmx::SetMute(bool mute)
 
 	if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eAudioRender]),
 			OMX_IndexConfigAudioMute, &amute) != OMX_ErrorNone)
-		ELOG("failed to set mute state!");
+		eLog(1, "[cOmx] failed to set mute state!");
 }
 
 void cOmx::StopVideo(void)
@@ -966,7 +968,7 @@ void cOmx::SetVideoErrorConcealment(bool startWithValidFrame)
 	ectype.bStartWithValidFrame = startWithValidFrame ? OMX_TRUE : OMX_FALSE;
 	if (OMX_SetParameter(ILC_GET_HANDLE(m_comp[eVideoDecoder]),
 			OMX_IndexParamBrcmVideoDecodeErrorConcealment, &ectype) != OMX_ErrorNone)
-		ELOG("failed to set video decode error concealment failed\n");
+		eLog(1, "[cOmx] failed to set video decode error concealment failed\n");
 }
 
 void cOmx::FlushAudio(void)
@@ -974,7 +976,7 @@ void cOmx::FlushAudio(void)
 	Lock();
 
 	if (OMX_SendCommand(ILC_GET_HANDLE(m_comp[eAudioRender]), OMX_CommandFlush, 100, NULL) != OMX_ErrorNone)
-		ELOG("failed to flush audio render!");
+		eLog(1, "[cOmx] failed to flush audio render!");
 
 	ilclient_wait_for_event(m_comp[eAudioRender], OMX_EventCmdComplete,
 		OMX_CommandFlush, 0, 100, 0, ILCLIENT_PORT_FLUSH,
@@ -989,7 +991,7 @@ void cOmx::FlushVideo(bool flushRender)
 	Lock();
 
 	if (OMX_SendCommand(ILC_GET_HANDLE(m_comp[eVideoDecoder]), OMX_CommandFlush, 130, NULL) != OMX_ErrorNone)
-		ELOG("failed to flush video decoder!");
+		eLog(1, "[cOmx] failed to flush video decoder!");
 
 	ilclient_wait_for_event(m_comp[eVideoDecoder], OMX_EventCmdComplete,
 		OMX_CommandFlush, 0, 130, 0, ILCLIENT_PORT_FLUSH,
@@ -1012,7 +1014,7 @@ int cOmx::SetVideoCodec(cVideoCodec::eCodec codec)
 	Lock();
 
 	if (ilclient_change_component_state(m_comp[eVideoDecoder], OMX_StateIdle) != 0)
-		ELOG("failed to set video decoder to idle state!");
+		eLog(1, "[cOmx] failed to set video decoder to idle state!");
 
 	// configure video decoder
 	OMX_VIDEO_PARAM_PORTFORMATTYPE videoFormat;
@@ -1025,14 +1027,14 @@ int cOmx::SetVideoCodec(cVideoCodec::eCodec codec)
 
 	if (OMX_SetParameter(ILC_GET_HANDLE(m_comp[eVideoDecoder]),
 			OMX_IndexParamVideoPortFormat, &videoFormat) != OMX_ErrorNone)
-		ELOG("failed to set video decoder parameters!");
+		eLog(1, "[cOmx] failed to set video decoder parameters!");
 
 	OMX_PARAM_PORTDEFINITIONTYPE param;
 	OMX_INIT_STRUCT(param);
 	param.nPortIndex = 130;
 	if (OMX_GetParameter(ILC_GET_HANDLE(m_comp[eVideoDecoder]),
 			OMX_IndexParamPortDefinition, &param) != OMX_ErrorNone)
-		ELOG("failed to get video decoder port parameters!");
+		eLog(1, "[cOmx] failed to get video decoder port parameters!");
 
 	param.nBufferSize = OMX_VIDEO_BUFFERSIZE;
 	param.nBufferCountActual = OMX_VIDEO_BUFFERS;
@@ -1041,7 +1043,7 @@ int cOmx::SetVideoCodec(cVideoCodec::eCodec codec)
 
 	if (OMX_SetParameter(ILC_GET_HANDLE(m_comp[eVideoDecoder]),
 			OMX_IndexParamPortDefinition, &param) != OMX_ErrorNone)
-		ELOG("failed to set video decoder port parameters!");
+		eLog(1, "[cOmx] failed to set video decoder port parameters!");
 
 	// start with valid frames only if codec is MPEG2
 	// update: with FW from 2015/01/18 this is not necessary anymore
@@ -1051,14 +1053,14 @@ int cOmx::SetVideoCodec(cVideoCodec::eCodec codec)
 	//SetVideoDecoderExtraBuffers(3);
 
 	if (ilclient_enable_port_buffers(m_comp[eVideoDecoder], 130, NULL, NULL, NULL) != 0)
-		ELOG("failed to enable port buffer on video decoder!");
+		eLog(1, "[cOmx] failed to enable port buffer on video decoder!");
 
 	if (ilclient_change_component_state(m_comp[eVideoDecoder], OMX_StateExecuting) != 0)
-		ELOG("failed to set video decoder to executing state!");
+		eLog(1, "[cOmx] failed to set video decoder to executing state!");
 
 	// setup clock tunnels first
 	if (ilclient_setup_tunnel(&m_tun[eClockToVideoScheduler], 0, 0) != 0)
-		ELOG("failed to setup up tunnel from clock to video scheduler!");
+		eLog(1, "[cOmx] failed to setup up tunnel from clock to video scheduler!");
 
 	m_handlePortEvents = true;
 
@@ -1074,7 +1076,7 @@ void cOmx::SetVideoDecoderExtraBuffers(int extraBuffers)
 	u32.nU32 = extraBuffers;
 	if (OMX_SetParameter(ILC_GET_HANDLE(m_comp[eVideoDecoder]),
 			OMX_IndexParamBrcmExtraBuffers, &u32) != OMX_ErrorNone)
-		ELOG("failed to set video decoder extra buffers!");
+		eLog(1, "[cOmx] failed to set video decoder extra buffers!");
 }
 
 int cOmx::SetupAudioRender(cAudioCodec::eCodec outputFormat, int channels,
@@ -1087,7 +1089,7 @@ int cOmx::SetupAudioRender(cAudioCodec::eCodec outputFormat, int channels,
 	format.nPortIndex = 100;
 	if (OMX_GetParameter(ILC_GET_HANDLE(m_comp[eAudioRender]),
 			OMX_IndexParamAudioPortFormat, &format) != OMX_ErrorNone)
-		ELOG("failed to get audio port format parameters!");
+		eLog(1, "[cOmx] failed to get audio port format parameters!");
 
 	format.eEncoding =
 		outputFormat == cAudioCodec::ePCM  ? OMX_AUDIO_CodingPCM :
@@ -1100,7 +1102,7 @@ int cOmx::SetupAudioRender(cAudioCodec::eCodec outputFormat, int channels,
 
 	if (OMX_SetParameter(ILC_GET_HANDLE(m_comp[eAudioRender]),
 			OMX_IndexParamAudioPortFormat, &format) != OMX_ErrorNone)
-		ELOG("failed to set audio port format parameters!");
+		eLog(1, "[cOmx] failed to set audio port format parameters!");
 
 	switch (outputFormat)
 	{
@@ -1115,7 +1117,7 @@ int cOmx::SetupAudioRender(cAudioCodec::eCodec outputFormat, int channels,
 
 		if (OMX_SetParameter(ILC_GET_HANDLE(m_comp[eAudioRender]),
 				OMX_IndexParamAudioMp3, &mp3) != OMX_ErrorNone)
-			ELOG("failed to set audio render mp3 parameters!");
+			eLog(1, "[cOmx] failed to set audio render mp3 parameters!");
 		break;
 
 	case cAudioCodec::eAC3:
@@ -1129,7 +1131,7 @@ int cOmx::SetupAudioRender(cAudioCodec::eCodec outputFormat, int channels,
 
 		if (OMX_SetParameter(ILC_GET_HANDLE(m_comp[eAudioRender]),
 				OMX_IndexParamAudioDdp, &ddp) != OMX_ErrorNone)
-			ELOG("failed to set audio render ddp parameters!");
+			eLog(1, "[cOmx] failed to set audio render ddp parameters!");
 		break;
 
 	case cAudioCodec::eAAC:
@@ -1142,7 +1144,7 @@ int cOmx::SetupAudioRender(cAudioCodec::eCodec outputFormat, int channels,
 
 		if (OMX_SetParameter(ILC_GET_HANDLE(m_comp[eAudioRender]),
 				OMX_IndexParamAudioAac, &aac) != OMX_ErrorNone)
-			ELOG("failed to set audio render aac parameters!");
+			eLog(1, "[cOmx] failed to set audio render aac parameters!");
 		break;
 
 	case cAudioCodec::eDTS:
@@ -1158,7 +1160,7 @@ int cOmx::SetupAudioRender(cAudioCodec::eCodec outputFormat, int channels,
 
 		if (OMX_SetParameter(ILC_GET_HANDLE(m_comp[eAudioRender]),
 				OMX_IndexParamAudioDts, &dts) != OMX_ErrorNone)
-			ELOG("failed to set audio render dts parameters!");
+			eLog(1, "[cOmx] failed to set audio render dts parameters!");
 		break;
 
 	case cAudioCodec::ePCM:
@@ -1176,11 +1178,11 @@ int cOmx::SetupAudioRender(cAudioCodec::eCodec outputFormat, int channels,
 
 		if (OMX_SetParameter(ILC_GET_HANDLE(m_comp[eAudioRender]),
 				OMX_IndexParamAudioPcm, &pcm) != OMX_ErrorNone)
-			ELOG("failed to set audio render pcm parameters!");
+			eLog(1, "[cOmx] failed to set audio render pcm parameters!");
 		break;
 
 	default:
-		ELOG("output codec not supported: %s!",
+		eLog(1, "[cOmx] output codec not supported: %s!",
 				cAudioCodec::Str(outputFormat));
 		break;
 	}
@@ -1192,7 +1194,7 @@ int cOmx::SetupAudioRender(cAudioCodec::eCodec outputFormat, int channels,
 
 	if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eAudioRender]),
 			OMX_IndexConfigBrcmAudioDestination, &audioDest) != OMX_ErrorNone)
-		ELOG("failed to set audio destination!");
+		eLog(1, "[cOmx] failed to set audio destination!");
 
 	// set up the number and size of buffers for audio render
 	OMX_PARAM_PORTDEFINITIONTYPE param;
@@ -1200,7 +1202,7 @@ int cOmx::SetupAudioRender(cAudioCodec::eCodec outputFormat, int channels,
 	param.nPortIndex = 100;
 	if (OMX_GetParameter(ILC_GET_HANDLE(m_comp[eAudioRender]),
 			OMX_IndexParamPortDefinition, &param) != OMX_ErrorNone)
-		ELOG("failed to get audio render port parameters!");
+		eLog(1, "[cOmx] failed to get audio render port parameters!");
 
 	param.nBufferSize = OMX_AUDIO_BUFFERSIZE;
 	param.nBufferCountActual = OMX_AUDIO_BUFFERS;
@@ -1209,15 +1211,15 @@ int cOmx::SetupAudioRender(cAudioCodec::eCodec outputFormat, int channels,
 
 	if (OMX_SetParameter(ILC_GET_HANDLE(m_comp[eAudioRender]),
 			OMX_IndexParamPortDefinition, &param) != OMX_ErrorNone)
-		ELOG("failed to set audio render port parameters!");
+		eLog(1, "[cOmx] failed to set audio render port parameters!");
 
 	if (ilclient_enable_port_buffers(m_comp[eAudioRender], 100, NULL, NULL, NULL) != 0)
-		ELOG("failed to enable port buffer on audio render!");
+		eLog(1, "[cOmx] failed to enable port buffer on audio render!");
 
 	ilclient_change_component_state(m_comp[eAudioRender], OMX_StateExecuting);
 
 	if (ilclient_setup_tunnel(&m_tun[eClockToAudioRender], 0, 0) != 0)
-		ELOG("failed to setup up tunnel from clock to audio render!");
+		eLog(1, "[cOmx] failed to setup up tunnel from clock to audio render!");
 
 	Unlock();
 	return 0;
@@ -1236,7 +1238,7 @@ void cOmx::SetDisplayMode(bool fill, bool noaspect)
 
 	if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eVideoRender]),
 			OMX_IndexConfigDisplayRegion, &region) != OMX_ErrorNone)
-		ELOG("failed to set display region!");
+		eLog(1, "[cOmx] failed to set display region!");
 }
 
 void cOmx::SetPixelAspectRatio(int width, int height)
@@ -1251,7 +1253,7 @@ void cOmx::SetPixelAspectRatio(int width, int height)
 
 	if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eVideoRender]),
 			OMX_IndexConfigDisplayRegion, &region) != OMX_ErrorNone)
-		ELOG("failed to set pixel apect ratio!");
+		eLog(1, "[cOmx] failed to set pixel apect ratio!");
 }
 
 void cOmx::SetDisplayRegion(int x, int y, int width, int height)
@@ -1270,7 +1272,7 @@ void cOmx::SetDisplayRegion(int x, int y, int width, int height)
 
 	if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eVideoRender]),
 			OMX_IndexConfigDisplayRegion, &region) != OMX_ErrorNone)
-		ELOG("failed to set display region!");
+		eLog(1, "[cOmx] failed to set display region!");
 }
 
 void cOmx::SetDisplay(int display, int layer)
@@ -1285,7 +1287,7 @@ void cOmx::SetDisplay(int display, int layer)
 
 	if (OMX_SetConfig(ILC_GET_HANDLE(m_comp[eVideoRender]),
 			OMX_IndexConfigDisplayRegion, &region) != OMX_ErrorNone)
-		ELOG("failed to set display number and layer!");
+		eLog(1, "[cOmx] failed to set display number and layer!");
 }
 
 OMX_BUFFERHEADERTYPE* cOmx::GetAudioBuffer(int64_t pts)
@@ -1370,7 +1372,7 @@ OMX_BUFFERHEADERTYPE* cOmx::GetVideoBuffer(int64_t pts)
 #ifdef DEBUG_BUFFERS
 void cOmx::DumpBuffer(OMX_BUFFERHEADERTYPE *buf, const char *prefix)
 {
-	DLOG("%s: TS=%8x%08x, LEN=%5d/%5d: %02x %02x %02x %02x... "
+	eLog(3, "[cOmx] %s: TS=%8x%08x, LEN=%5d/%5d: %02x %02x %02x %02x... "
 			"FLAGS: %s%s%s%s%s%s%s%s%s%s%s%s%s%s",
 		prefix,
 		buf->nTimeStamp.nHighPart, buf->nTimeStamp.nLowPart,
@@ -1408,7 +1410,7 @@ bool cOmx::EmptyAudioBuffer(OMX_BUFFERHEADERTYPE *buf)
 	if (OMX_EmptyThisBuffer(ILC_GET_HANDLE(m_comp[eAudioRender]), buf)
 			!= OMX_ErrorNone)
 	{
-		ELOG("failed to empty OMX audio buffer");
+		eLog(1, "[cOmx] failed to empty OMX audio buffer");
 
 		if (buf->nFlags & OMX_BUFFERFLAG_STARTTIME)
 			m_setAudioStartTime = true;
@@ -1439,7 +1441,7 @@ bool cOmx::EmptyVideoBuffer(OMX_BUFFERHEADERTYPE *buf)
 	if (OMX_EmptyThisBuffer(ILC_GET_HANDLE(m_comp[eVideoDecoder]), buf)
 			!= OMX_ErrorNone)
 	{
-		ELOG("failed to empty OMX video buffer");
+		eLog(1, "[cOmx] failed to empty OMX video buffer");
 
 		if (buf->nFlags & OMX_BUFFERFLAG_STARTTIME)
 			m_setVideoStartTime = true;

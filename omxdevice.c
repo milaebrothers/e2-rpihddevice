@@ -22,7 +22,6 @@
 #include "audio.h"
 #include "display.h"
 #include "setup.h"
-#include "tools.h"
 
 #include <string.h>
 
@@ -93,12 +92,12 @@ int cOmxDevice::Init(void)
 {
 	if (m_omx->Init(m_display, m_layer) < 0)
 	{
-		ELOG("failed to initialize OMX!");
+		eLog(1, "[cOmxDevice] failed to initialize OMX!");
 		return -1;
 	}
 	if (m_audio->Init() < 0)
 	{
-		ELOG("failed to initialize audio!");
+		eLog(1, "[cOmxDevice] failed to initialize audio!");
 		return -1;
 	}
 	m_omx->SetBufferStallCallback(&OnBufferStall, this);
@@ -115,12 +114,12 @@ int cOmxDevice::DeInit(void)
 	cRpiSetup::SetVideoSetupChangedCallback(0);
 	if (m_audio->DeInit() < 0)
 	{
-		ELOG("failed to deinitialize audio!");
+		eLog(1, "[cOmxDevice] failed to deinitialize audio!");
 		return -1;
 	}
 	if (m_omx->DeInit() < 0)
 	{
-		ELOG("failed to deinitialize OMX!");
+		eLog(1, "[cOmxDevice] failed to deinitialize OMX!");
 		return -1;
 	}
 	return 0;
@@ -150,7 +149,7 @@ void cOmxDevice::GetVideoSize(int &Width, int &Height, double &VideoAspect)
 
 void cOmxDevice::ScaleVideo(const cRect &Rect)
 {
-	DBG("ScaleVideo(%d, %d, %d, %d)",
+	eDebug("[cOmxDevice] ScaleVideo(%d, %d, %d, %d)",
 		Rect.X(), Rect.Y(), Rect.Width(), Rect.Height());
 
 	m_omx->SetDisplayRegion(Rect.X(), Rect.Y(), Rect.Width(), Rect.Height());
@@ -159,7 +158,7 @@ void cOmxDevice::ScaleVideo(const cRect &Rect)
 bool cOmxDevice::SetPlayMode(ePlayMode PlayMode)
 {
 	m_mutex->Lock();
-	DBG("SetPlayMode(%s)",
+	eDebug("[cOmxDevice] SetPlayMode(%s)",
 		PlayMode == pmNone			 ? "none" 			   :
 		PlayMode == pmAudioVideo	 ? "Audio/Video" 	   :
 		PlayMode == pmAudioOnly		 ? "Audio only" 	   :
@@ -206,7 +205,7 @@ void cOmxDevice::StillPicture(const uchar *Data, int Length)
 		cDevice::StillPicture(Data, Length);
 	else
 	{
-		DBG("StillPicture()");
+		eDebug("[cOmxDevice] StillPicture()");
 		int pesLength = 0;
 		uchar *pesPacket = 0;
 
@@ -270,7 +269,7 @@ int cOmxDevice::PlayAudio(const uchar *Data, int Length, uchar Id)
 	// ignore audio packets during fast trick speeds for non-radio recordings
 	if (m_playbackSpeed > eNormal && m_playMode != pmAudioOnly)
 	{
-		DLOG("audio packet ignored!");
+		eLog(3, "[cOmxDevice] audio packet ignored!");
 		return Length;
 	}
 
@@ -287,7 +286,7 @@ int cOmxDevice::PlayAudio(const uchar *Data, int Length, uchar Id)
 
 			if (!m_hasVideo)
 			{
-				DBG("audio first");
+				eDebug("[cOmxDevice] audio first");
 				m_omx->SetClockScale(
 						s_playbackSpeeds[m_direction][m_playbackSpeed]);
 				m_omx->StartClock(m_hasVideo, m_hasAudio,
@@ -305,7 +304,7 @@ int cOmxDevice::PlayAudio(const uchar *Data, int Length, uchar Id)
 		int64_t ptsDiff = PtsDiff(m_audioPts & MAX33BIT, pts);
 
 		if ((m_audioPts & ~MAX33BIT) != (m_audioPts + ptsDiff & ~MAX33BIT))
-			DBG("audio PTS wrap around");
+			eDebug("[cOmxDevice] audio PTS wrap around");
 
 		m_audioPts += ptsDiff;
 
@@ -336,7 +335,7 @@ int cOmxDevice::PlayAudio(const uchar *Data, int Length, uchar Id)
 	m_mutex->Unlock();
 
 	if (Transferring() && !ret)
-		DBG("failed to write %d bytes of audio packet!", Length);
+		eDebug("[cOmxDevice] failed to write %d bytes of audio packet!", Length);
 
 	if (ret && Transferring())
 		AdjustLiveSpeed();
@@ -368,10 +367,10 @@ int cOmxDevice::PlayVideo(const uchar *Data, int Length, bool EndOfFrame)
 			if (cRpiSetup::IsVideoCodecSupported(m_videoCodec))
 			{
 				m_omx->SetVideoCodec(m_videoCodec);
-				DLOG("set video codec to %s", cVideoCodec::Str(m_videoCodec));
+				eLog(3, "[cOmxDevice] set video codec to %s", cVideoCodec::Str(m_videoCodec));
 			}
 			else
-				eDebug("[cOmxDevice] Video format not supported!");
+				eLog(1, "[cOmxDevice] video format not supported!");
 		}
 	}
 
@@ -381,7 +380,7 @@ int cOmxDevice::PlayVideo(const uchar *Data, int Length, bool EndOfFrame)
 		m_hasVideo = true;
 		if (!m_hasAudio)
 		{
-			DBG("video first");
+			eDebug("[cOmxDevice] video first");
 			m_omx->SetClockReference(cOmx::eClockRefVideo);
 			m_omx->SetClockScale(s_playbackSpeeds[m_direction][m_playbackSpeed]);
 			m_omx->StartClock(m_hasVideo, m_hasAudio,
@@ -430,7 +429,7 @@ int cOmxDevice::PlayVideo(const uchar *Data, int Length, bool EndOfFrame)
 				if (!m_omx->EmptyVideoBuffer(buf))
 				{
 					ret = 0;
-					ELOG("failed to pass buffer to video decoder!");
+					eLog(1, "[cOmxDevice] failed to pass buffer to video decoder!");
 					break;
 				}
 			}
@@ -445,7 +444,7 @@ int cOmxDevice::PlayVideo(const uchar *Data, int Length, bool EndOfFrame)
 	m_mutex->Unlock();
 
 	if (Transferring() && !ret)
-		DBG("failed to write %d bytes of video packet!", Length);
+		eDebug("[cOmxDevice] failed to write %d bytes of video packet!", Length);
 
 	if (ret && Transferring())
 		AdjustLiveSpeed();
@@ -455,7 +454,7 @@ int cOmxDevice::PlayVideo(const uchar *Data, int Length, bool EndOfFrame)
 
 bool cOmxDevice::SubmitEOS(void)
 {
-	DBG("SubmitEOS()");
+	eDebug("[cOmxDevice] SubmitEOS()");
 	OMX_BUFFERHEADERTYPE *buf = m_omx->GetVideoBuffer(0);
 	if (buf)
 	{
@@ -479,7 +478,7 @@ int64_t cOmxDevice::GetSTC(void)
 uchar *cOmxDevice::GrabImage(int &Size, bool Jpeg, int Quality,
 		int SizeX, int SizeY)
 {
-	DBG("GrabImage(%s, %dx%d)", Jpeg ? "JPEG" : "PNM", SizeX, SizeY);
+	eDebug("[cOmxDevice] GrabImage(%s, %dx%d)", Jpeg ? "JPEG" : "PNM", SizeX, SizeY);
 
 	uint8_t* ret = NULL;
 	int width, height;
@@ -494,13 +493,13 @@ uchar *cOmxDevice::GrabImage(int &Size, bool Jpeg, int Quality,
 
 	if (!frame)
 	{
-		ELOG("failed to allocate image buffer!");
+		eLog(1, "[cOmxDevice] failed to allocate image buffer!");
 		return ret;
 	}
 
 	if (cRpiDisplay::Snapshot(frame, SizeX, SizeY))
 	{
-		ELOG("failed to grab image!");
+		eLog(1, "[cOmxDevice] failed to grab image!");
 		free(frame);
 		return ret;
 	}
@@ -526,7 +525,7 @@ uchar *cOmxDevice::GrabImage(int &Size, bool Jpeg, int Quality,
 
 void cOmxDevice::Clear(void)
 {
-	DBG("Clear()");
+	eDebug("[cOmxDevice] Clear()");
 	m_mutex->Lock();
 
 	FlushStreams();
@@ -539,7 +538,7 @@ void cOmxDevice::Clear(void)
 
 void cOmxDevice::Play(void)
 {
-	DBG("Play()");
+	eDebug("[cOmxDevice] Play()");
 	m_mutex->Lock();
 
 	m_playbackSpeed = eNormal;
@@ -552,7 +551,7 @@ void cOmxDevice::Play(void)
 
 void cOmxDevice::Freeze(void)
 {
-	DBG("Freeze()");
+	eDebug("[cOmxDevice] Freeze()");
 	m_mutex->Lock();
 
 	m_omx->SetClockScale(s_playbackSpeeds[eForward][ePause]);
@@ -608,14 +607,14 @@ void cOmxDevice::ApplyTrickSpeed(int trickSpeed, bool forward)
 
 	m_omx->SetClockScale(s_playbackSpeeds[m_direction][m_playbackSpeed]);
 
-	DBG("ApplyTrickSpeed(%s, %s)",
+	eDebug("[cOmxDevice] ApplyTrickSpeed(%s, %s)",
 			PlaybackSpeedStr(m_playbackSpeed), DirectionStr(m_direction));
 	return;
 }
 
 void cOmxDevice::PtsTracker(int64_t ptsDiff)
 {
-	DBG("PtsTracker(%lld)", ptsDiff);
+	eDebug("[cOmxDevice] PtsTracker(%lld)", ptsDiff);
 
 	if (ptsDiff < 0)
 		--m_playDirection;
@@ -653,7 +652,7 @@ void cOmxDevice::AdjustLiveSpeed(void)
 			m_liveSpeed = eNoCorrection;
 
 #ifdef DEBUG_BUFFERSTAT
-		DLOG("buffer usage: A=%3d%%, V=%3d%%, Corr=%d",
+		eLog(3, "[cOmxDevice] buffer usage: A=%3d%%, V=%3d%%, Corr=%d",
 				usedAudioBuffers, usedVideoBuffers,
 				m_liveSpeed == eNegMaxCorrection ? -2 :
 				m_liveSpeed == eNegCorrection    ? -1 :
@@ -668,7 +667,7 @@ void cOmxDevice::AdjustLiveSpeed(void)
 
 void cOmxDevice::HandleBufferStall()
 {
-	ELOG("buffer stall!");
+	eLog(1, "[cOmxDevice] buffer stall!");
 	m_mutex->Lock();
 
 	FlushStreams(true);
@@ -683,7 +682,7 @@ void cOmxDevice::HandleBufferStall()
 
 void cOmxDevice::HandleEndOfStream()
 {
-	DBG("HandleEndOfStream()");
+	eDebug("[cOmxDevice] HandleEndOfStream()");
 	m_mutex->Lock();
 
 	// flush pipes and restart clock after still image
@@ -697,10 +696,10 @@ void cOmxDevice::HandleEndOfStream()
 
 void cOmxDevice::HandleStreamStart()
 {
-	DBG("HandleStreamStart()");
+	eDebug("[cOmxDevice] HandleStreamStart()");
 
 	const cVideoFrameFormat *format = m_omx->GetVideoFrameFormat();
-	DLOG("video stream started %dx%d@%d%s, PAR=%d/%d",
+	eLog(3, "[cOmxDevice] video stream started %dx%d@%d%s, PAR=%d/%d",
 			format->width, format->height, format->frameRate,
 			format->Interlaced() ? "i" : "p",
 			format->pixelWidth, format->pixelHeight);
@@ -743,13 +742,13 @@ void cOmxDevice::HandleVideoSetupChanged()
 	cRational renderPAR = cRational(videoPAR / displayPAR);
 	renderPAR.Reduce(100);
 	m_omx->SetPixelAspectRatio(renderPAR.num, renderPAR.den);
-	DLOG("display PAR=%0.3f, setting video render PAR=%d/%d",
+	eLog(3, "[cOmxDevice] display PAR=%0.3f, setting video render PAR=%d/%d",
 			displayPAR, renderPAR.num, renderPAR.den);
 }
 
 void cOmxDevice::FlushStreams(bool flushVideoRender)
 {
-	DBG("FlushStreams(%s)", flushVideoRender ? "flushVideoRender" : "");
+	eDebug("[cOmxDevice] FlushStreams(%s)", flushVideoRender ? "flushVideoRender" : "");
 	m_omx->StopClock();
 
 	if (m_hasVideo)
@@ -763,7 +762,7 @@ void cOmxDevice::FlushStreams(bool flushVideoRender)
 
 void cOmxDevice::SetVolumeDevice(int Volume)
 {
-	DBG("SetVolume(%d)", Volume);
+	eDebug("[cOmxDevice] SetVolume(%d)", Volume);
 	if (Volume)
 	{
 		m_omx->SetVolume(Volume);
