@@ -20,7 +20,7 @@
 #ifndef OMX_H
 #define OMX_H
 
-#include <vdr/thread.h>		//#include <lib/base/condVar.h>
+#include <vdr/thread.h>
 #include "rpitools.h"
 
 extern "C"
