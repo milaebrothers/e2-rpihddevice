@@ -9,7 +9,7 @@
  */
 
 #include "rpitools.h"
-#include "condVar.h"
+#include "condVar.h"	//	#include <lib/base/condVar.h>
 
 #if !defined(max)
 #define max(a, b)       ((a) > (b) ? (a) : (b))
