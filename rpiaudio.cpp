@@ -381,7 +381,7 @@ private:
 	bool				m_parsed;
 
 	/* ---------------------------------------------------------------------- */
-	/*     audio codec parser helper functions, based on vdr-softhddevice     */
+	/*     audio codec parser helper functions, based on e2-rpihddevice       */
 	/* ---------------------------------------------------------------------- */
 
 	static const uint16_t BitRateTable[2][3][16];
