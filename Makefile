@@ -119,7 +119,7 @@ INCLUDES += $(shell pkg-config --cflags freetype2)
 ### The object files (add further files here):
 
 ILCLIENT = $(ILCDIR)/libilclient.a
-OBJS = $(E2LIB).o rpitools.o rpisetup.o omx.o rpiaudio.o omxdecoder.o rpidisplay.o
+OBJS = $(E2LIB).o tools.o rpisetup.o omx.o rpiaudio.o omxdecoder.o rpidisplay.o
 
 ### The main target:
 
