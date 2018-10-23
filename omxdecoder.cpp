@@ -136,7 +136,7 @@ void cOmxDevice::GetOsdSize(int &Width, int &Height, double &PixelAspect)
 	cRpiDisplay::GetSize(Width, Height, PixelAspect);
 }
 /*	lib/dvb/decoder.cpp		 int eDVBVideo::readApiSize(int fd, int &xres, int &yres, int &aspect) */
-void cOmxDevice::GetVideoSize(int &Width, int &Height, double &VideoAspect)	
+void cOmxDevice::GetVideoSize(int &Width, int &Height, double &VideoAspect)
 {
 	Height = m_omx->GetVideoFrameFormat()->height;
 	Width = m_omx->GetVideoFrameFormat()->width;
