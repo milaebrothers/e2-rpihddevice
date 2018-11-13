@@ -14,26 +14,29 @@ VERSION = $(shell grep 'static const char \*VERSION *=' $(E2LIB).cpp | awk '{ pr
 
 ### The directory environment:
 
-# Use package data if installed...otherwise assume we're under the VDR source directory:
-PKGCFG = $(if $(VDRDIR),$(shell pkg-config --variable=$(1) $(VDRDIR)/vdr.pc),$(shell PKG_CONFIG_PATH="$$PKG_CONFIG_PATH:../../.." pkg-config --variable=$(1) vdr))
-LIBDIR = $(call PKGCFG,libdir)
-LOCDIR = $(call PKGCFG,locdir)
-PLGCFG = $(call PKGCFG,plgcfg)
+LIBDIR = /usr/local/lib
+LOCDIR = /usr/local/share/locale
+#PLGCFG = $(call PKGCFG,plgcfg)
 #
 TMPDIR ?= /tmp
 
 ### The compiler options:
 
-export CFLAGS   = $(call PKGCFG,cflags)
-export CXXFLAGS = $(call PKGCFG,cxxflags)
+CFLAGS   ?= -g -O3 -Wall
+CXXFLAGS ?= -g -O3 -Wall -Werror=overloaded-virtual -Wno-parentheses
+CDEFINES  = -D_GNU_SOURCE
+CDEFINES += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
+
+#export CFLAGS   = $(CFLAGS) $(CDEFINES) $(CINCLUDES) $(HDRDIR)
+#export CXXFLAGS = $(CXXFLAGS) $(CDEFINES) $(CINCLUDES) $(HDRDIR)
 
 ### The version number of E2's lib API:
 
-APIVERSION = $(call PKGCFG,apiversion)
+APIVERSION = 6.2
 
 ### Allow user defined options to overwrite defaults:
 
--include $(PLGCFG)
+#-include $(PLGCFG)
 
 ### The name of the distribution archive:
 
@@ -51,7 +54,8 @@ DEFINES += -DHAVE_LIBOPENMAX=2 -DOMX -DOMX_SKIP64BIT -DUSE_EXTERNAL_OMX -DHAVE_L
 DEFINES += -Wno-psabi -Wno-write-strings -fpermissive
 DEFINES += -D__STL_CONFIG_H
 
-CXXFLAGS += -D__STDC_CONSTANT_MACROS
+CFLAGS   += $(CDEFINES) -fPIC
+CXXFLAGS += $(CDEFINES) -D__STDC_CONSTANT_MACROS -fPIC
 
 ILCDIR   =ilclient
 VCINCDIR =$(SDKSTAGE)/opt/vc/include
@@ -120,6 +124,7 @@ INCLUDES += $(shell pkg-config --cflags freetype2)
 
 ILCLIENT = $(ILCDIR)/libilclient.a
 OBJS = $(E2LIB).o rpisetup.o omx.o rpiaudio.o omxdecoder.o rpidisplay.o
+#OBJS =$(E2LIB).o omx.o
 
 ### The main target:
 
